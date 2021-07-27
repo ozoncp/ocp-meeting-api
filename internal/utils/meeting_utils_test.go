@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	model "github.com/ozoncp/ocp-meeting-api/internal/models"
 	"os"
 	"reflect"
@@ -59,6 +60,17 @@ func TestSliceToMap(t *testing.T) {
 
 	if !reflect.DeepEqual(expectedMap, result) {
 		t.Errorf("Incorerect result: %v. Expected: %v", result, expectedMap)
+	}
+}
+
+func TestSliceToMapError(t *testing.T) {
+
+	var sourceSlice []model.Meeting
+	var expectedErr = errors.New("incorrect slice of meetings")
+	_, err := SliceToMap(sourceSlice)
+
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Errorf("Expected error: %v", expectedErr.Error())
 	}
 }
 
