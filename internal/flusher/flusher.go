@@ -24,11 +24,21 @@ type flusher struct {
 
 func (f *flusher) Flush(meetings []models.Meeting) []models.Meeting {
 	chunks := utils.SplitToBulks(meetings, uint(f.chunkSize))
+	var problemMeetings [][]models.Meeting
 
 	for i, meeting := range chunks {
 		if err := f.meetingRepo.Add(meeting); err != nil {
-			return meeting[i:]
+			problemMeetings = chunks[i:]
+			break
 		}
+	}
+
+	if problemMeetings != nil {
+		problemList := make([]models.Meeting, 0, len(problemMeetings)*f.chunkSize)
+		for _, meeting := range chunks {
+			problemList = append(problemList, meeting...)
+		}
+		return problemList
 	}
 
 	return nil

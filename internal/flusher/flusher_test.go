@@ -57,8 +57,8 @@ var _ = Describe("Flusher", func() {
 		})
 
 		It("", func() {
-			Expect(len(result)).Should(BeEquivalentTo(len(meetings[:3])))
-			Expect(result).Should(BeEquivalentTo(meetings[:3]))
+			Expect(len(result)).Should(BeEquivalentTo(len(meetings)))
+			Expect(result).Should(BeEquivalentTo(meetings))
 		})
 	})
 
@@ -69,7 +69,7 @@ var _ = Describe("Flusher", func() {
 		})
 
 		It("", func() {
-			Expect(result).Should(BeEquivalentTo(meetings[:3]))
+			Expect(result).Should(BeEquivalentTo(meetings))
 		})
 	})
 })
