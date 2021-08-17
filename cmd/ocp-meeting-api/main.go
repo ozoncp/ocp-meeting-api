@@ -6,6 +6,9 @@ import (
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	api "github.com/ozoncp/ocp-meeting-api/internal/api"
 	desc "github.com/ozoncp/ocp-meeting-api/pkg/ocp-meeting-api"
@@ -17,45 +20,96 @@ const (
 	httpPort = ":8080"
 )
 
-func runGrpc() error {
+func regSignalHandler(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		defer signal.Stop(done)
+		<-done
+		log.Info().Msg("Stop signal received")
+		cancel()
+	}()
+
+	return ctx
+}
+
+func runGRPC(ctx context.Context) error {
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
-		log.Fatal().Msgf("failed to listen: %v", err)
+		log.Error().Err(err).Msg("GRPC: Listen")
+		return err
 	}
 
 	s := grpc.NewServer()
 	desc.RegisterOcpMeetingApiServer(s, api.NewOcpMeetingApi())
+	log.Info().Msg("GRPC Service was started")
 
-	if err := s.Serve(listen); err != nil {
-		log.Fatal().Msgf("failed to serve: %v", err)
+	srvErr := make(chan error)
+	go func() {
+		if err := s.Serve(listen); err != nil {
+			srvErr <- err
+		}
+	}()
+
+	select {
+	case err := <-srvErr:
+		log.Error().Err(err).Msg("GRPC: Serve")
+		return err
+
+	case <-ctx.Done():
+		s.GracefulStop()
+		log.Info().Msg("GRPC Service was closed")
 	}
 
 	return nil
 }
 
-func runJson() {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
+func runJSON(ctx context.Context) error {
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
 	err := desc.RegisterOcpMeetingApiHandlerFromEndpoint(ctx, mux, grpcPort, opts)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("JSON: Register API handler")
+		return err
 	}
 
-	err = http.ListenAndServe(httpPort, mux)
-	if err != nil {
-		panic(err)
+	srv := &http.Server{Addr: httpPort, Handler: mux}
+	log.Info().Msg("HTTP Service was started")
+
+	srvErr := make(chan error)
+	go func() {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			srvErr <- err
+		}
+	}()
+
+	select {
+	case err := <-srvErr:
+		log.Error().Err(err).Msg("JSON: Serve")
+		return err
+
+	case <-ctx.Done():
+		_ = srv.Shutdown(ctx)
+		log.Info().Msg("HTTP Service was closed")
 	}
+
+	return nil
 }
 
 func main() {
-	go runJson()
+	ctx := regSignalHandler(context.Background())
 
-	if err := runGrpc(); err != nil {
-		log.Fatal().Msgf("Failed to start gRPC server: %v", err)
+	go func() {
+		if err := runJSON(ctx); err != nil {
+			log.Fatal().Err(err).Msg("HTTP Service stopped on error")
+		}
+	}()
+
+	if err := runGRPC(ctx); err != nil {
+		log.Fatal().Err(err).Msg("GRPC Service stopped on error")
 	}
 }
