@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+option go_package = "github.com/ozoncp/ocp-meeting-api/pkg/ocp-meeting-api;ocp_meeting_api";
+
+package ocp.meeting.api;
+
+service OcpMeetingApi {
+
+  rpc CreateMeetingV1(CreateMeetingV1Request) returns (CreateMeetingV1Response) {
+    option (google.api.http) = {
+      post: "/v1/meetings"
+      body: "*"
+    };
+  }
+
+  rpc DescribeMeetingV1(DescribeMeetingV1Request) returns (DescribeMeetingV1Response) {
+    option (google.api.http) = {
+      get: "/v1/meetings/{meeting_id}"
+    };
+  }
+
+  rpc ListMeetingV1(google.protobuf.Empty) returns (ListMeetingV1Response) {
+    option (google.api.http) = {
+      get: "/v1/meetings"
+    };
+  }
+
+  rpc RemoveMeetingV1(RemoveMeetingV1Request) returns (RemoveMeetingV1Response) {
+    option (google.api.http) = {
+      delete: "/v1/meetings/{meeting_id}"
+    };
+  }
+}
+
+message Meeting {
+  uint64 id = 1;
+  uint64 userId = 2;
+  string link = 3;
+  google.protobuf.Timestamp start = 4;
+  google.protobuf.Timestamp end = 5;
+}
+
+// Create
+message CreateMeetingV1Request {
+  Meeting meeting = 1;
+}
+
+message CreateMeetingV1Response {
+}
+
+// Read
+message DescribeMeetingV1Request {
+  uint64 meeting_id = 1 [(validate.rules).uint64.gt = 0];
+}
+message DescribeMeetingV1Response {
+}
+
+// List
+message ListMeetingV1Response {
+}
+
+// Delete
+message RemoveMeetingV1Request {
+  uint64 meeting_id = 1 [(validate.rules).uint64.gt = 0];
+}
+message RemoveMeetingV1Response {
+}
