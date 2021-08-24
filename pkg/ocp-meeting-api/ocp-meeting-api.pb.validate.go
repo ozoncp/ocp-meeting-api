@@ -208,6 +208,8 @@ func (m *CreateMeetingV1Response) Validate() error {
 		return nil
 	}
 
+	// no validation rules for MeetingId
+
 	return nil
 }
 
@@ -349,6 +351,16 @@ func (m *DescribeMeetingV1Response) Validate() error {
 		return nil
 	}
 
+	if v, ok := interface{}(m.GetMeeting()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DescribeMeetingV1ResponseValidationError{
+				field:  "Meeting",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -408,12 +420,108 @@ var _ interface {
 	ErrorName() string
 } = DescribeMeetingV1ResponseValidationError{}
 
+// Validate checks the field values on ListMeetingV1Request with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *ListMeetingV1Request) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if m.GetLimit() <= 0 {
+		return ListMeetingV1RequestValidationError{
+			field:  "Limit",
+			reason: "value must be greater than 0",
+		}
+	}
+
+	if m.GetOffset() <= 0 {
+		return ListMeetingV1RequestValidationError{
+			field:  "Offset",
+			reason: "value must be greater than 0",
+		}
+	}
+
+	return nil
+}
+
+// ListMeetingV1RequestValidationError is the validation error returned by
+// ListMeetingV1Request.Validate if the designated constraints aren't met.
+type ListMeetingV1RequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListMeetingV1RequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListMeetingV1RequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListMeetingV1RequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListMeetingV1RequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListMeetingV1RequestValidationError) ErrorName() string {
+	return "ListMeetingV1RequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListMeetingV1RequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListMeetingV1Request.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListMeetingV1RequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListMeetingV1RequestValidationError{}
+
 // Validate checks the field values on ListMeetingV1Response with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
 func (m *ListMeetingV1Response) Validate() error {
 	if m == nil {
 		return nil
+	}
+
+	for idx, item := range m.GetMeetings() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListMeetingV1ResponseValidationError{
+					field:  fmt.Sprintf("Meetings[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	return nil
@@ -474,6 +582,152 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListMeetingV1ResponseValidationError{}
+
+// Validate checks the field values on UpdateMeetingV1Request with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *UpdateMeetingV1Request) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetMeeting()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return UpdateMeetingV1RequestValidationError{
+				field:  "Meeting",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	return nil
+}
+
+// UpdateMeetingV1RequestValidationError is the validation error returned by
+// UpdateMeetingV1Request.Validate if the designated constraints aren't met.
+type UpdateMeetingV1RequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateMeetingV1RequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateMeetingV1RequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateMeetingV1RequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateMeetingV1RequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateMeetingV1RequestValidationError) ErrorName() string {
+	return "UpdateMeetingV1RequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateMeetingV1RequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateMeetingV1Request.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateMeetingV1RequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateMeetingV1RequestValidationError{}
+
+// Validate checks the field values on UpdateMeetingV1Response with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *UpdateMeetingV1Response) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Updated
+
+	return nil
+}
+
+// UpdateMeetingV1ResponseValidationError is the validation error returned by
+// UpdateMeetingV1Response.Validate if the designated constraints aren't met.
+type UpdateMeetingV1ResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e UpdateMeetingV1ResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e UpdateMeetingV1ResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e UpdateMeetingV1ResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e UpdateMeetingV1ResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e UpdateMeetingV1ResponseValidationError) ErrorName() string {
+	return "UpdateMeetingV1ResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e UpdateMeetingV1ResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sUpdateMeetingV1Response.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = UpdateMeetingV1ResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = UpdateMeetingV1ResponseValidationError{}
 
 // Validate checks the field values on RemoveMeetingV1Request with the rules
 // defined in the proto definition for this message. If any rules are
@@ -556,6 +810,8 @@ func (m *RemoveMeetingV1Response) Validate() error {
 	if m == nil {
 		return nil
 	}
+
+	// no validation rules for Removed
 
 	return nil
 }

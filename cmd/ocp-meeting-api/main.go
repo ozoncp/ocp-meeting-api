@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/jmoiron/sqlx"
+	"github.com/ozoncp/ocp-meeting-api/internal/db"
+	"github.com/ozoncp/ocp-meeting-api/internal/repo"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
@@ -36,7 +39,7 @@ func regSignalHandler(ctx context.Context) context.Context {
 	return ctx
 }
 
-func runGRPC(ctx context.Context) error {
+func runGRPC(ctx context.Context, database *sqlx.DB) error {
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Error().Err(err).Msg("GRPC: Listen")
@@ -44,7 +47,7 @@ func runGRPC(ctx context.Context) error {
 	}
 
 	s := grpc.NewServer()
-	desc.RegisterOcpMeetingApiServer(s, api.NewOcpMeetingApi())
+	desc.RegisterOcpMeetingApiServer(s, api.NewOcpMeetingApi(repo.NewRepo(database)))
 	log.Info().Msg("GRPC Service was started")
 
 	srvErr := make(chan error)
@@ -103,13 +106,16 @@ func runJSON(ctx context.Context) error {
 func main() {
 	ctx := regSignalHandler(context.Background())
 
+	database := db.Connect("postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable")
+	defer database.Close()
+
 	go func() {
 		if err := runJSON(ctx); err != nil {
 			log.Fatal().Err(err).Msg("HTTP Service stopped on error")
 		}
 	}()
 
-	if err := runGRPC(ctx); err != nil {
+	if err := runGRPC(ctx, database); err != nil {
 		log.Fatal().Err(err).Msg("GRPC Service stopped on error")
 	}
 }

@@ -28,6 +28,22 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
         "tags": [
           "OcpMeetingApi"
         ]
@@ -55,6 +71,36 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/apiCreateMeetingV1Request"
+            }
+          }
+        ],
+        "tags": [
+          "OcpMeetingApi"
+        ]
+      },
+      "put": {
+        "operationId": "OcpMeetingApi_UpdateMeetingV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiUpdateMeetingV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiUpdateMeetingV1Request"
             }
           }
         ],
@@ -135,14 +181,32 @@
       "title": "Create"
     },
     "apiCreateMeetingV1Response": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "meeting_id": {
+          "type": "string",
+          "format": "uint64"
+        }
+      }
     },
     "apiDescribeMeetingV1Response": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "meeting": {
+          "$ref": "#/definitions/apiMeeting"
+        }
+      }
     },
     "apiListMeetingV1Response": {
       "type": "object",
-      "title": "List"
+      "properties": {
+        "meetings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiMeeting"
+          }
+        }
+      }
     },
     "apiMeeting": {
       "type": "object",
@@ -169,7 +233,29 @@
       }
     },
     "apiRemoveMeetingV1Response": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "removed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "apiUpdateMeetingV1Request": {
+      "type": "object",
+      "properties": {
+        "meeting": {
+          "$ref": "#/definitions/apiMeeting"
+        }
+      },
+      "title": "Update"
+    },
+    "apiUpdateMeetingV1Response": {
+      "type": "object",
+      "properties": {
+        "updated": {
+          "type": "boolean"
+        }
+      }
     },
     "protobufAny": {
       "type": "object",

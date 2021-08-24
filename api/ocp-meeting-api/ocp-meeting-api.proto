@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
@@ -24,9 +23,16 @@ service OcpMeetingApi {
     };
   }
 
-  rpc ListMeetingV1(google.protobuf.Empty) returns (ListMeetingV1Response) {
+  rpc ListMeetingV1(ListMeetingV1Request) returns (ListMeetingV1Response) {
     option (google.api.http) = {
       get: "/v1/meetings"
+    };
+  }
+
+  rpc UpdateMeetingV1(UpdateMeetingV1Request) returns (UpdateMeetingV1Response) {
+    option (google.api.http) = {
+      put: "/v1/meetings"
+      body: "*"
     };
   }
 
@@ -51,6 +57,7 @@ message CreateMeetingV1Request {
 }
 
 message CreateMeetingV1Response {
+  uint64 meeting_id = 1;
 }
 
 // Read
@@ -58,10 +65,25 @@ message DescribeMeetingV1Request {
   uint64 meeting_id = 1 [(validate.rules).uint64.gt = 0];
 }
 message DescribeMeetingV1Response {
+  Meeting meeting = 1;
 }
 
 // List
+message ListMeetingV1Request {
+  uint64 limit = 1 [(validate.rules).uint64.gt = 0];
+  uint64 offset = 2 [(validate.rules).uint64.gt = 0];
+}
+
 message ListMeetingV1Response {
+  repeated Meeting meetings = 1;
+}
+
+// Update
+message UpdateMeetingV1Request {
+  Meeting meeting = 1;
+}
+message UpdateMeetingV1Response {
+  bool updated = 1;
 }
 
 // Delete
@@ -69,4 +91,5 @@ message RemoveMeetingV1Request {
   uint64 meeting_id = 1 [(validate.rules).uint64.gt = 0];
 }
 message RemoveMeetingV1Response {
+  bool removed = 1;
 }
