@@ -232,6 +232,29 @@
         }
       }
     },
+    "apiMultiCreateMeetingsV1Request": {
+      "type": "object",
+      "properties": {
+        "meetings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiMeeting"
+          }
+        }
+      }
+    },
+    "apiMultiCreateMeetingsV1Response": {
+      "type": "object",
+      "properties": {
+        "meeting_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
     "apiRemoveMeetingV1Response": {
       "type": "object",
       "properties": {

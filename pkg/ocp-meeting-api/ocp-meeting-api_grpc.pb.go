@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OcpMeetingApiClient interface {
+	MultiCreateMeetingsV1(ctx context.Context, in *MultiCreateMeetingsV1Request, opts ...grpc.CallOption) (*MultiCreateMeetingsV1Response, error)
 	CreateMeetingV1(ctx context.Context, in *CreateMeetingV1Request, opts ...grpc.CallOption) (*CreateMeetingV1Response, error)
 	DescribeMeetingV1(ctx context.Context, in *DescribeMeetingV1Request, opts ...grpc.CallOption) (*DescribeMeetingV1Response, error)
 	ListMeetingV1(ctx context.Context, in *ListMeetingV1Request, opts ...grpc.CallOption) (*ListMeetingV1Response, error)
@@ -31,6 +32,15 @@ type ocpMeetingApiClient struct {
 
 func NewOcpMeetingApiClient(cc grpc.ClientConnInterface) OcpMeetingApiClient {
 	return &ocpMeetingApiClient{cc}
+}
+
+func (c *ocpMeetingApiClient) MultiCreateMeetingsV1(ctx context.Context, in *MultiCreateMeetingsV1Request, opts ...grpc.CallOption) (*MultiCreateMeetingsV1Response, error) {
+	out := new(MultiCreateMeetingsV1Response)
+	err := c.cc.Invoke(ctx, "/ocp.meeting.api.OcpMeetingApi/MultiCreateMeetingsV1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *ocpMeetingApiClient) CreateMeetingV1(ctx context.Context, in *CreateMeetingV1Request, opts ...grpc.CallOption) (*CreateMeetingV1Response, error) {
@@ -82,6 +92,7 @@ func (c *ocpMeetingApiClient) RemoveMeetingV1(ctx context.Context, in *RemoveMee
 // All implementations must embed UnimplementedOcpMeetingApiServer
 // for forward compatibility
 type OcpMeetingApiServer interface {
+	MultiCreateMeetingsV1(context.Context, *MultiCreateMeetingsV1Request) (*MultiCreateMeetingsV1Response, error)
 	CreateMeetingV1(context.Context, *CreateMeetingV1Request) (*CreateMeetingV1Response, error)
 	DescribeMeetingV1(context.Context, *DescribeMeetingV1Request) (*DescribeMeetingV1Response, error)
 	ListMeetingV1(context.Context, *ListMeetingV1Request) (*ListMeetingV1Response, error)
@@ -94,6 +105,9 @@ type OcpMeetingApiServer interface {
 type UnimplementedOcpMeetingApiServer struct {
 }
 
+func (UnimplementedOcpMeetingApiServer) MultiCreateMeetingsV1(context.Context, *MultiCreateMeetingsV1Request) (*MultiCreateMeetingsV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MultiCreateMeetingsV1 not implemented")
+}
 func (UnimplementedOcpMeetingApiServer) CreateMeetingV1(context.Context, *CreateMeetingV1Request) (*CreateMeetingV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateMeetingV1 not implemented")
 }
@@ -120,6 +134,24 @@ type UnsafeOcpMeetingApiServer interface {
 
 func RegisterOcpMeetingApiServer(s grpc.ServiceRegistrar, srv OcpMeetingApiServer) {
 	s.RegisterService(&OcpMeetingApi_ServiceDesc, srv)
+}
+
+func _OcpMeetingApi_MultiCreateMeetingsV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MultiCreateMeetingsV1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpMeetingApiServer).MultiCreateMeetingsV1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.meeting.api.OcpMeetingApi/MultiCreateMeetingsV1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpMeetingApiServer).MultiCreateMeetingsV1(ctx, req.(*MultiCreateMeetingsV1Request))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _OcpMeetingApi_CreateMeetingV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -219,6 +251,10 @@ var OcpMeetingApi_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ocp.meeting.api.OcpMeetingApi",
 	HandlerType: (*OcpMeetingApiServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "MultiCreateMeetingsV1",
+			Handler:    _OcpMeetingApi_MultiCreateMeetingsV1_Handler,
+		},
 		{
 			MethodName: "CreateMeetingV1",
 			Handler:    _OcpMeetingApi_CreateMeetingV1_Handler,

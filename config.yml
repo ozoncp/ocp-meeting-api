@@ -1,0 +1,29 @@
+project:
+  name: "OCP Meeting Api"
+  author: "Pavel Shestakov"
+  version: "0.0.1"
+
+grpc:
+  address: ":8082"
+
+
+database:
+  host: "postgres"
+  port: "5432"
+  user: "postgres"
+  password: "postgres"
+  database: "postgres"
+  sslmode: "disable"
+  driver: "postgres"
+
+request:
+  batchsize: 5
+
+prometheus:
+  uri: "/metrics"
+  port: ":9100"
+
+kafka:
+  topic: "meeting"
+  brokers:
+    - "kafka:9092"

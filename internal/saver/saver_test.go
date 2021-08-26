@@ -1,6 +1,7 @@
 package saver
 
 import (
+	"context"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,6 +17,7 @@ var _ = Describe("Saver", func() {
 		mockFlusher *mocks.MockFlusher
 		meetings    []models.Meeting
 		meetingChan chan models.Meeting
+		ctx         context.Context
 	)
 
 	var now = time.Now()
@@ -23,6 +25,7 @@ var _ = Describe("Saver", func() {
 	BeforeEach(func() {
 
 		ctrl = gomock.NewController(GinkgoT())
+		ctx = context.Background()
 		mockFlusher = mocks.NewMockFlusher(ctrl)
 		meetingChan = make(chan models.Meeting, 5)
 		meetings = []models.Meeting{
@@ -41,12 +44,12 @@ var _ = Describe("Saver", func() {
 
 	Context("Tests", func() {
 		BeforeEach(func() {
-			mockFlusher.EXPECT().Flush(gomock.Any()).MinTimes(1).Return(meetings)
+			mockFlusher.EXPECT().Flush(ctx, gomock.Any()).MinTimes(1).Return(meetings)
 		})
 
 		It("Saving", func() {
 			s := NewSaver(5, mockFlusher, time.Second)
-			s.Init()
+			s.Init(ctx)
 
 			for _, meeting := range meetings {
 				_ = s.Save(meeting)
@@ -58,9 +61,9 @@ var _ = Describe("Saver", func() {
 		})
 
 		It("Panic", func() {
-			mockFlusher.Flush(nil)
+			mockFlusher.Flush(ctx, nil)
 			s := NewSaver(5, mockFlusher, time.Second)
-			s.Init()
+			s.Init(ctx)
 
 			save := func() {
 				_ = s.Save(meetings[0])

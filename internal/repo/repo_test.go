@@ -64,7 +64,7 @@ var _ = Describe("Repo", func() {
 		})
 
 		It("Add many meetings", func() {
-			err := r.AddMany(ctx, meetings)
+			_, err := r.AddMany(ctx, meetings)
 			Expect(err).Should(BeNil())
 		})
 	})

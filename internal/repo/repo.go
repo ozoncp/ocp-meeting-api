@@ -9,7 +9,7 @@ import (
 
 type Repo interface {
 	Add(ctx context.Context, meeting *models.Meeting) error
-	AddMany(ctx context.Context, meetings []models.Meeting) error
+	AddMany(ctx context.Context, meetings []models.Meeting) ([]uint64, error)
 	Describe(ctx context.Context, meetingId uint64) (*models.Meeting, error)
 	Update(ctx context.Context, meeting models.Meeting) (bool, error)
 	List(ctx context.Context, limit, offset uint64) ([]models.Meeting, error)
@@ -43,9 +43,10 @@ func (r *repo) Add(ctx context.Context, meeting *models.Meeting) error {
 	return nil
 }
 
-func (r *repo) AddMany(ctx context.Context, meetings []models.Meeting) error {
+func (r *repo) AddMany(ctx context.Context, meetings []models.Meeting) ([]uint64, error) {
 	query := sq.Insert("meeting").
 		Columns("user_id", "link", "start", "\"end\"").
+		Suffix("RETURNING \"id\"").
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db)
 
@@ -53,10 +54,21 @@ func (r *repo) AddMany(ctx context.Context, meetings []models.Meeting) error {
 		query = query.Values(meeting.UserId, meeting.Link, meeting.Start, meeting.End)
 	}
 
-	if _, err := query.QueryContext(ctx); err != nil {
-		return err
+	rows, err := query.QueryContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	meetingIds := make([]uint64, 0)
+	for rows.Next() {
+		var id uint64
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		meetingIds = append(meetingIds, id)
+	}
+	return meetingIds, nil
 }
 
 func (r *repo) Describe(ctx context.Context, id uint64) (*models.Meeting, error) {

@@ -1,6 +1,7 @@
 package saver
 
 import (
+	"context"
 	"github.com/ozoncp/ocp-meeting-api/internal/flusher"
 	"github.com/ozoncp/ocp-meeting-api/internal/models"
 	"time"
@@ -8,7 +9,7 @@ import (
 
 type Saver interface {
 	Save(meeting models.Meeting) error
-	Init()
+	Init(ctx context.Context)
 	Close()
 }
 
@@ -34,7 +35,7 @@ func (s *saver) Save(meeting models.Meeting) error {
 	return nil
 }
 
-func (s *saver) Init() {
+func (s *saver) Init(ctx context.Context) {
 	go func() {
 		meetings := make([]models.Meeting, 0)
 
@@ -44,11 +45,11 @@ func (s *saver) Init() {
 		for {
 			select {
 			case <-ticker.C:
-				_ = s.flusher.Flush(meetings)
+				_ = s.flusher.Flush(ctx, meetings)
 			case meeting := <-s.meetingChan:
 				meetings = append(meetings, meeting)
 			case <-s.closeChan:
-				_ = s.flusher.Flush(meetings)
+				_ = s.flusher.Flush(ctx, meetings)
 				close(s.meetingChan)
 				return
 			}

@@ -10,6 +10,13 @@ package ocp.meeting.api;
 
 service OcpMeetingApi {
 
+  rpc MultiCreateMeetingsV1(MultiCreateMeetingsV1Request) returns (MultiCreateMeetingsV1Response) {
+    option (google.api.http) = {
+      post: "/v1/meetings"
+      body: "*"
+    };
+  }
+
   rpc CreateMeetingV1(CreateMeetingV1Request) returns (CreateMeetingV1Response) {
     option (google.api.http) = {
       post: "/v1/meetings"
@@ -49,6 +56,14 @@ message Meeting {
   string link = 3;
   google.protobuf.Timestamp start = 4;
   google.protobuf.Timestamp end = 5;
+}
+
+message MultiCreateMeetingsV1Request {
+  repeated Meeting meetings = 1 [(validate.rules).repeated.min_items = 1];
+}
+
+message MultiCreateMeetingsV1Response {
+  repeated uint64 meeting_ids = 1 [(validate.rules).repeated.min_items = 1];
 }
 
 // Create

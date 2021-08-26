@@ -50,11 +50,12 @@ func (mr *MockRepoMockRecorder) Add(arg0, arg1 interface{}) *gomock.Call {
 }
 
 // AddMany mocks base method.
-func (m *MockRepo) AddMany(arg0 context.Context, arg1 []models.Meeting) error {
+func (m *MockRepo) AddMany(arg0 context.Context, arg1 []models.Meeting) ([]uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddMany", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].([]uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddMany indicates an expected call of AddMany.
