@@ -833,8 +833,6 @@ func (m *UpdateMeetingV1Response) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Updated
-
 	return nil
 }
 
@@ -975,8 +973,6 @@ func (m *RemoveMeetingV1Response) Validate() error {
 	if m == nil {
 		return nil
 	}
-
-	// no validation rules for Removed
 
 	return nil
 }

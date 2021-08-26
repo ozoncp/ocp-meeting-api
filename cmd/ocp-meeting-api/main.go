@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/jmoiron/sqlx"
 	"github.com/ozoncp/ocp-meeting-api/internal/config"
 	"github.com/ozoncp/ocp-meeting-api/internal/metrics"
 	"github.com/ozoncp/ocp-meeting-api/internal/producer"
@@ -52,20 +50,12 @@ func runGRPC(ctx context.Context, config *config.Config) error {
 
 	prod, err := producer.NewProducer(config.Kafka.Topic, config.Kafka.Brokers)
 	if err != nil {
-		log.Error().Err(err).Msg("db connect failed")
+		log.Error().Err(err).Msg("Kafka start failed")
 		return err
 	}
 	log.Info().Msg("start producer")
 
-	dataSourceName := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=%v",
-		config.Database.Host,
-		config.Database.Port,
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Name,
-		config.Database.SSL)
-
-	db, err := sqlx.Connect(config.Database.Driver, dataSourceName)
+	db, err := repo.NewDB(config)
 	if err != nil {
 		log.Error().Err(err).Msg("db connect failed")
 		return err

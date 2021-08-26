@@ -256,12 +256,7 @@
       }
     },
     "apiRemoveMeetingV1Response": {
-      "type": "object",
-      "properties": {
-        "removed": {
-          "type": "boolean"
-        }
-      }
+      "type": "object"
     },
     "apiUpdateMeetingV1Request": {
       "type": "object",
@@ -273,12 +268,7 @@
       "title": "Update"
     },
     "apiUpdateMeetingV1Response": {
-      "type": "object",
-      "properties": {
-        "updated": {
-          "type": "boolean"
-        }
-      }
+      "type": "object"
     },
     "protobufAny": {
       "type": "object",

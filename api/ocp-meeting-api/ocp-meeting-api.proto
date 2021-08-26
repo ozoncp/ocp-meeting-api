@@ -98,7 +98,6 @@ message UpdateMeetingV1Request {
   Meeting meeting = 1;
 }
 message UpdateMeetingV1Response {
-  bool updated = 1;
 }
 
 // Delete
@@ -106,5 +105,4 @@ message RemoveMeetingV1Request {
   uint64 meeting_id = 1 [(validate.rules).uint64.gt = 0];
 }
 message RemoveMeetingV1Response {
-  bool removed = 1;
 }

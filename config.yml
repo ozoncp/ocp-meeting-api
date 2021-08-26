@@ -8,7 +8,7 @@ grpc:
 
 
 database:
-  host: "postgres"
+  host: "127.0.0.1"
   port: "5432"
   user: "postgres"
   password: "postgres"
@@ -16,8 +16,6 @@ database:
   sslmode: "disable"
   driver: "postgres"
 
-request:
-  batchsize: 5
 
 prometheus:
   uri: "/metrics"

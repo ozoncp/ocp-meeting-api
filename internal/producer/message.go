@@ -1,11 +1,11 @@
 package producer
 
-type EventType int
+type EventType string
 
 const (
-	Create EventType = iota
-	Update
-	Delete
+	Create EventType = "Created"
+	Update EventType = "Updated"
+	Delete EventType = "Deleted"
 )
 
 type EventMessage struct {
@@ -22,18 +22,5 @@ func CreateMessage(eventType EventType, eventMessage EventMessage) Message {
 	return Message{
 		EventType:    eventType,
 		EventMessage: eventMessage,
-	}
-}
-
-func (eventType EventType) String() string {
-	switch eventType {
-	case Create:
-		return "Created"
-	case Update:
-		return "Updated"
-	case Delete:
-		return "Removed"
-	default:
-		return "Unknown event type"
 	}
 }

@@ -2,8 +2,10 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	"github.com/ozoncp/ocp-meeting-api/internal/config"
 	"github.com/ozoncp/ocp-meeting-api/internal/models"
 )
 
@@ -24,6 +26,18 @@ func NewRepo(db *sqlx.DB) Repo {
 	return &repo{
 		db: db,
 	}
+}
+
+func NewDB(config *config.Config) (db *sqlx.DB, err error) {
+	dataSourceName := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=%v",
+		config.Database.Host,
+		config.Database.Port,
+		config.Database.User,
+		config.Database.Password,
+		config.Database.Name,
+		config.Database.SSL)
+
+	return sqlx.Connect(config.Database.Driver, dataSourceName)
 }
 
 func (r *repo) Add(ctx context.Context, meeting *models.Meeting) error {

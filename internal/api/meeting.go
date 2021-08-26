@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
-	"github.com/ozoncp/ocp-meeting-api/internal/config"
+	"errors"
+	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/ozoncp/ocp-meeting-api/internal/metrics"
 	"github.com/ozoncp/ocp-meeting-api/internal/models"
 	"github.com/ozoncp/ocp-meeting-api/internal/producer"
@@ -14,6 +16,10 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
+)
+
+const (
+	batchSize uint = 5
 )
 
 type api struct {
@@ -48,10 +54,11 @@ func (a *api) MultiCreateMeetingsV1(
 		})
 	}
 
-	config, _ := config.Read()
+	tracer := opentracing.GlobalTracer()
+	span := tracer.StartSpan("MultiCreateCertificatesV1")
+	defer span.Finish()
 
-	batchSize := config.Request.BatchSize
-	bulks := utils.SplitToBulks(meetings, uint(batchSize))
+	bulks := utils.SplitToBulks(meetings, batchSize)
 	response := &desc.MultiCreateMeetingsV1Response{}
 
 	for i := 0; i < len(bulks); i++ {
@@ -60,6 +67,12 @@ func (a *api) MultiCreateMeetingsV1(
 			log.Error().Msgf("Request %v failed with %v", req, err)
 			return nil, err
 		}
+
+		childSpan := tracer.StartSpan(
+			fmt.Sprintf("Size of %d bulk: %d", i, len(bulks[i])),
+			opentracing.ChildOf(span.Context()),
+		)
+		childSpan.Finish()
 
 		response.MeetingIds = append(response.MeetingIds, meetingIds...)
 	}
@@ -180,7 +193,7 @@ func (a *api) UpdateMeetingV1(
 		End:    req.Meeting.End.AsTime(),
 	}
 
-	updated, err := a.repo.Update(ctx, meeting)
+	_, err := a.repo.Update(ctx, meeting)
 	if err != nil {
 		log.Error().Msgf("Request %v failed with %v", req, err)
 		return nil, err
@@ -199,9 +212,7 @@ func (a *api) UpdateMeetingV1(
 		log.Error().Msgf("failed send message to kafka")
 	}
 
-	return &desc.UpdateMeetingV1Response{
-		Updated: updated,
-	}, nil
+	return &desc.UpdateMeetingV1Response{}, nil
 }
 
 func (a *api) RemoveMeetingV1(
@@ -220,7 +231,8 @@ func (a *api) RemoveMeetingV1(
 	if removed == true {
 		log.Printf("Removing of the meeting was successful")
 	} else {
-		log.Printf("Removing of the meeting was failed")
+		log.Error().Msgf("Id was not found")
+		return nil, errors.New("NotFound")
 	}
 
 	metrics.RemoveCounterInc()
@@ -234,7 +246,5 @@ func (a *api) RemoveMeetingV1(
 		log.Error().Msgf("failed send message to kafka")
 	}
 
-	return &desc.RemoveMeetingV1Response{
-		Removed: removed,
-	}, nil
+	return &desc.RemoveMeetingV1Response{}, nil
 }
