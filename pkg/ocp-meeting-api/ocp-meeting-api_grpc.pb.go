@@ -4,7 +4,6 @@ package ocp_meeting_api
 
 import (
 	context "context"
-	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -21,7 +20,8 @@ const _ = grpc.SupportPackageIsVersion7
 type OcpMeetingApiClient interface {
 	CreateMeetingV1(ctx context.Context, in *CreateMeetingV1Request, opts ...grpc.CallOption) (*CreateMeetingV1Response, error)
 	DescribeMeetingV1(ctx context.Context, in *DescribeMeetingV1Request, opts ...grpc.CallOption) (*DescribeMeetingV1Response, error)
-	ListMeetingV1(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ListMeetingV1Response, error)
+	ListMeetingV1(ctx context.Context, in *ListMeetingV1Request, opts ...grpc.CallOption) (*ListMeetingV1Response, error)
+	UpdateMeetingV1(ctx context.Context, in *UpdateMeetingV1Request, opts ...grpc.CallOption) (*UpdateMeetingV1Response, error)
 	RemoveMeetingV1(ctx context.Context, in *RemoveMeetingV1Request, opts ...grpc.CallOption) (*RemoveMeetingV1Response, error)
 }
 
@@ -51,9 +51,18 @@ func (c *ocpMeetingApiClient) DescribeMeetingV1(ctx context.Context, in *Describ
 	return out, nil
 }
 
-func (c *ocpMeetingApiClient) ListMeetingV1(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ListMeetingV1Response, error) {
+func (c *ocpMeetingApiClient) ListMeetingV1(ctx context.Context, in *ListMeetingV1Request, opts ...grpc.CallOption) (*ListMeetingV1Response, error) {
 	out := new(ListMeetingV1Response)
 	err := c.cc.Invoke(ctx, "/ocp.meeting.api.OcpMeetingApi/ListMeetingV1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ocpMeetingApiClient) UpdateMeetingV1(ctx context.Context, in *UpdateMeetingV1Request, opts ...grpc.CallOption) (*UpdateMeetingV1Response, error) {
+	out := new(UpdateMeetingV1Response)
+	err := c.cc.Invoke(ctx, "/ocp.meeting.api.OcpMeetingApi/UpdateMeetingV1", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +84,8 @@ func (c *ocpMeetingApiClient) RemoveMeetingV1(ctx context.Context, in *RemoveMee
 type OcpMeetingApiServer interface {
 	CreateMeetingV1(context.Context, *CreateMeetingV1Request) (*CreateMeetingV1Response, error)
 	DescribeMeetingV1(context.Context, *DescribeMeetingV1Request) (*DescribeMeetingV1Response, error)
-	ListMeetingV1(context.Context, *empty.Empty) (*ListMeetingV1Response, error)
+	ListMeetingV1(context.Context, *ListMeetingV1Request) (*ListMeetingV1Response, error)
+	UpdateMeetingV1(context.Context, *UpdateMeetingV1Request) (*UpdateMeetingV1Response, error)
 	RemoveMeetingV1(context.Context, *RemoveMeetingV1Request) (*RemoveMeetingV1Response, error)
 	mustEmbedUnimplementedOcpMeetingApiServer()
 }
@@ -90,8 +100,11 @@ func (UnimplementedOcpMeetingApiServer) CreateMeetingV1(context.Context, *Create
 func (UnimplementedOcpMeetingApiServer) DescribeMeetingV1(context.Context, *DescribeMeetingV1Request) (*DescribeMeetingV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeMeetingV1 not implemented")
 }
-func (UnimplementedOcpMeetingApiServer) ListMeetingV1(context.Context, *empty.Empty) (*ListMeetingV1Response, error) {
+func (UnimplementedOcpMeetingApiServer) ListMeetingV1(context.Context, *ListMeetingV1Request) (*ListMeetingV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMeetingV1 not implemented")
+}
+func (UnimplementedOcpMeetingApiServer) UpdateMeetingV1(context.Context, *UpdateMeetingV1Request) (*UpdateMeetingV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMeetingV1 not implemented")
 }
 func (UnimplementedOcpMeetingApiServer) RemoveMeetingV1(context.Context, *RemoveMeetingV1Request) (*RemoveMeetingV1Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveMeetingV1 not implemented")
@@ -146,7 +159,7 @@ func _OcpMeetingApi_DescribeMeetingV1_Handler(srv interface{}, ctx context.Conte
 }
 
 func _OcpMeetingApi_ListMeetingV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(empty.Empty)
+	in := new(ListMeetingV1Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -158,7 +171,25 @@ func _OcpMeetingApi_ListMeetingV1_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: "/ocp.meeting.api.OcpMeetingApi/ListMeetingV1",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OcpMeetingApiServer).ListMeetingV1(ctx, req.(*empty.Empty))
+		return srv.(OcpMeetingApiServer).ListMeetingV1(ctx, req.(*ListMeetingV1Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OcpMeetingApi_UpdateMeetingV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMeetingV1Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OcpMeetingApiServer).UpdateMeetingV1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ocp.meeting.api.OcpMeetingApi/UpdateMeetingV1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OcpMeetingApiServer).UpdateMeetingV1(ctx, req.(*UpdateMeetingV1Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -199,6 +230,10 @@ var OcpMeetingApi_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMeetingV1",
 			Handler:    _OcpMeetingApi_ListMeetingV1_Handler,
+		},
+		{
+			MethodName: "UpdateMeetingV1",
+			Handler:    _OcpMeetingApi_UpdateMeetingV1_Handler,
 		},
 		{
 			MethodName: "RemoveMeetingV1",

@@ -1,6 +1,7 @@
 package flusher
 
 import (
+	"context"
 	"errors"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
@@ -17,6 +18,7 @@ var _ = Describe("Flusher", func() {
 		f        Flusher
 		meetings []models.Meeting
 		result   []models.Meeting
+		ctx      context.Context
 	)
 
 	var now = time.Now()
@@ -25,6 +27,7 @@ var _ = Describe("Flusher", func() {
 
 		ctrl = gomock.NewController(GinkgoT())
 		mockRepo = mocks.NewMockRepo(ctrl)
+		ctx = context.Background()
 
 		meetings = []models.Meeting{
 			{1, 1, "", now, now},
@@ -38,12 +41,12 @@ var _ = Describe("Flusher", func() {
 
 	JustBeforeEach(func() {
 		f = NewFlusher(3, mockRepo)
-		result = f.Flush(meetings)
+		result = f.Flush(ctx, meetings)
 	})
 
 	Context("Save all", func() {
 		BeforeEach(func() {
-			mockRepo.EXPECT().Add(gomock.Any()).Return(nil).AnyTimes()
+			mockRepo.EXPECT().AddMany(ctx, gomock.Any()).Return(nil).AnyTimes()
 		})
 
 		It("", func() {
@@ -53,7 +56,7 @@ var _ = Describe("Flusher", func() {
 
 	Context("Saving error", func() {
 		BeforeEach(func() {
-			mockRepo.EXPECT().Add(gomock.Any()).Return(errors.New("error"))
+			mockRepo.EXPECT().AddMany(ctx, gomock.Any()).Return(errors.New("error"))
 		})
 
 		It("", func() {
@@ -64,8 +67,8 @@ var _ = Describe("Flusher", func() {
 
 	Context("Partial saving", func() {
 		BeforeEach(func() {
-			mockRepo.EXPECT().Add(gomock.Any()).Return(errors.New("error"))
-			mockRepo.EXPECT().Add(gomock.Any()).Return(nil).Times(1)
+			mockRepo.EXPECT().AddMany(ctx, gomock.Any()).Return(errors.New("error"))
+			mockRepo.EXPECT().AddMany(ctx, gomock.Any()).Return(nil).Times(1)
 		})
 
 		It("", func() {

@@ -1,13 +1,14 @@
 package flusher
 
 import (
+	"context"
 	"github.com/ozoncp/ocp-meeting-api/internal/models"
 	"github.com/ozoncp/ocp-meeting-api/internal/repo"
 	"github.com/ozoncp/ocp-meeting-api/internal/utils"
 )
 
 type Flusher interface {
-	Flush(tasks []models.Meeting) []models.Meeting
+	Flush(ctx context.Context, meetings []models.Meeting) []models.Meeting
 }
 
 func NewFlusher(chunkSize int, meetingRepo repo.Repo) Flusher {
@@ -22,12 +23,12 @@ type flusher struct {
 	meetingRepo repo.Repo
 }
 
-func (f *flusher) Flush(meetings []models.Meeting) []models.Meeting {
+func (f *flusher) Flush(ctx context.Context, meetings []models.Meeting) []models.Meeting {
 	chunks := utils.SplitToBulks(meetings, uint(f.chunkSize))
 	var problemMeetings [][]models.Meeting
 
 	for i, meeting := range chunks {
-		if err := f.meetingRepo.Add(meeting); err != nil {
+		if err := f.meetingRepo.AddMany(ctx, meeting); err != nil {
 			problemMeetings = chunks[i:]
 			break
 		}
