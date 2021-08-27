@@ -232,13 +232,31 @@
         }
       }
     },
-    "apiRemoveMeetingV1Response": {
+    "apiMultiCreateMeetingsV1Request": {
       "type": "object",
       "properties": {
-        "removed": {
-          "type": "boolean"
+        "meetings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiMeeting"
+          }
         }
       }
+    },
+    "apiMultiCreateMeetingsV1Response": {
+      "type": "object",
+      "properties": {
+        "meeting_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          }
+        }
+      }
+    },
+    "apiRemoveMeetingV1Response": {
+      "type": "object"
     },
     "apiUpdateMeetingV1Request": {
       "type": "object",
@@ -250,12 +268,7 @@
       "title": "Update"
     },
     "apiUpdateMeetingV1Response": {
-      "type": "object",
-      "properties": {
-        "updated": {
-          "type": "boolean"
-        }
-      }
+      "type": "object"
     },
     "protobufAny": {
       "type": "object",

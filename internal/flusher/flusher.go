@@ -28,7 +28,7 @@ func (f *flusher) Flush(ctx context.Context, meetings []models.Meeting) []models
 	var problemMeetings [][]models.Meeting
 
 	for i, meeting := range chunks {
-		if err := f.meetingRepo.AddMany(ctx, meeting); err != nil {
+		if _, err := f.meetingRepo.AddMany(ctx, meeting); err != nil {
 			problemMeetings = chunks[i:]
 			break
 		}

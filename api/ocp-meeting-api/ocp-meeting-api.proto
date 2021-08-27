@@ -10,6 +10,13 @@ package ocp.meeting.api;
 
 service OcpMeetingApi {
 
+  rpc MultiCreateMeetingsV1(MultiCreateMeetingsV1Request) returns (MultiCreateMeetingsV1Response) {
+    option (google.api.http) = {
+      post: "/v1/meetings"
+      body: "*"
+    };
+  }
+
   rpc CreateMeetingV1(CreateMeetingV1Request) returns (CreateMeetingV1Response) {
     option (google.api.http) = {
       post: "/v1/meetings"
@@ -51,6 +58,14 @@ message Meeting {
   google.protobuf.Timestamp end = 5;
 }
 
+message MultiCreateMeetingsV1Request {
+  repeated Meeting meetings = 1 [(validate.rules).repeated.min_items = 1];
+}
+
+message MultiCreateMeetingsV1Response {
+  repeated uint64 meeting_ids = 1 [(validate.rules).repeated.min_items = 1];
+}
+
 // Create
 message CreateMeetingV1Request {
   Meeting meeting = 1;
@@ -83,7 +98,6 @@ message UpdateMeetingV1Request {
   Meeting meeting = 1;
 }
 message UpdateMeetingV1Response {
-  bool updated = 1;
 }
 
 // Delete
@@ -91,5 +105,4 @@ message RemoveMeetingV1Request {
   uint64 meeting_id = 1 [(validate.rules).uint64.gt = 0];
 }
 message RemoveMeetingV1Response {
-  bool removed = 1;
 }

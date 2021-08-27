@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/jmoiron/sqlx"
-	"github.com/ozoncp/ocp-meeting-api/internal/db"
+	"github.com/ozoncp/ocp-meeting-api/internal/config"
+	"github.com/ozoncp/ocp-meeting-api/internal/metrics"
+	"github.com/ozoncp/ocp-meeting-api/internal/producer"
 	"github.com/ozoncp/ocp-meeting-api/internal/repo"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
@@ -39,15 +41,29 @@ func regSignalHandler(ctx context.Context) context.Context {
 	return ctx
 }
 
-func runGRPC(ctx context.Context, database *sqlx.DB) error {
+func runGRPC(ctx context.Context, config *config.Config) error {
 	listen, err := net.Listen("tcp", grpcPort)
 	if err != nil {
 		log.Error().Err(err).Msg("GRPC: Listen")
 		return err
 	}
 
+	prod, err := producer.NewProducer(config.Kafka.Topic, config.Kafka.Brokers)
+	if err != nil {
+		log.Error().Err(err).Msg("Kafka start failed")
+		return err
+	}
+	log.Info().Msg("start producer")
+
+	db, err := repo.NewDB(config)
+	if err != nil {
+		log.Error().Err(err).Msg("db connect failed")
+		return err
+	}
+	defer db.Close()
+
 	s := grpc.NewServer()
-	desc.RegisterOcpMeetingApiServer(s, api.NewOcpMeetingApi(repo.NewRepo(database)))
+	desc.RegisterOcpMeetingApiServer(s, api.NewOcpMeetingApi(repo.NewRepo(db), prod))
 	log.Info().Msg("GRPC Service was started")
 
 	srvErr := make(chan error)
@@ -103,11 +119,31 @@ func runJSON(ctx context.Context) error {
 	return nil
 }
 
+func runMetricsServer(uri string, port string) error {
+	mux := http.NewServeMux()
+	mux.Handle(uri, promhttp.Handler())
+
+	srv := &http.Server{
+		Addr:    port,
+		Handler: mux,
+	}
+	metrics.RegisterMetrics()
+	log.Info().Msg("Metrics server started")
+
+	return srv.ListenAndServe()
+}
+
 func main() {
 	ctx := regSignalHandler(context.Background())
 
-	database := db.Connect("postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable")
-	defer database.Close()
+	config, err := config.Read()
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("Readig configuration file was failed")
+		return
+	}
+
+	go runMetricsServer(config.Prometheus.Uri, config.Prometheus.Port)
 
 	go func() {
 		if err := runJSON(ctx); err != nil {
@@ -115,7 +151,7 @@ func main() {
 		}
 	}()
 
-	if err := runGRPC(ctx, database); err != nil {
+	if err := runGRPC(ctx, config); err != nil {
 		log.Fatal().Err(err).Msg("GRPC Service stopped on error")
 	}
 }
