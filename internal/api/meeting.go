@@ -54,8 +54,7 @@ func (a *api) MultiCreateMeetingsV1(
 		})
 	}
 
-	tracer := opentracing.GlobalTracer()
-	span := tracer.StartSpan("MultiCreateCertificatesV1")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "MultiCreateMeetings")
 	defer span.Finish()
 
 	bulks := utils.SplitToBulks(meetings, batchSize)
@@ -68,7 +67,7 @@ func (a *api) MultiCreateMeetingsV1(
 			return nil, err
 		}
 
-		childSpan := tracer.StartSpan(
+		childSpan := opentracing.StartSpan(
 			fmt.Sprintf("Size of %d bulk: %d", i, len(bulks[i])),
 			opentracing.ChildOf(span.Context()),
 		)
@@ -112,9 +111,8 @@ func (a *api) CreateMeetingV1(
 	}
 
 	msg := producer.CreateMessage(producer.Create, event)
-	if err = a.prod.Send(msg); err != nil {
-		log.Error().Msgf("failed send message to kafka")
-	}
+
+	go a.sendMessage(msg)
 
 	return &desc.CreateMeetingV1Response{
 		MeetingId: meeting.Id,
@@ -208,9 +206,8 @@ func (a *api) UpdateMeetingV1(
 		Timestamp: time.Now().Unix(),
 	}
 	msg := producer.CreateMessage(producer.Update, event)
-	if err = a.prod.Send(msg); err != nil {
-		log.Error().Msgf("failed send message to kafka")
-	}
+
+	go a.sendMessage(msg)
 
 	return &desc.UpdateMeetingV1Response{}, nil
 }
@@ -242,9 +239,14 @@ func (a *api) RemoveMeetingV1(
 		Timestamp: time.Now().Unix(),
 	}
 	msg := producer.CreateMessage(producer.Delete, event)
-	if err = a.prod.Send(msg); err != nil {
-		log.Error().Msgf("failed send message to kafka")
-	}
+
+	go a.sendMessage(msg)
 
 	return &desc.RemoveMeetingV1Response{}, nil
+}
+
+func (a *api) sendMessage(msg producer.Message) {
+	if err := a.prod.Send(msg); err != nil {
+		log.Error().Msgf("failed send message to kafka")
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"github.com/ozoncp/ocp-meeting-api/internal/config"
 	"github.com/ozoncp/ocp-meeting-api/internal/models"
 )
@@ -43,8 +44,8 @@ func NewDB(config *config.Config) (db *sqlx.DB, err error) {
 func (r *repo) Add(ctx context.Context, meeting *models.Meeting) error {
 	query := sq.
 		Insert("meeting").
-		Columns("user_id", "link", "start", "\"end\"").
-		Values(meeting.UserId, meeting.Link, meeting.Start, meeting.End).
+		Columns("user_id", "link", "start", "\"end\"", "isDeleted").
+		Values(meeting.UserId, meeting.Link, meeting.Start, meeting.End, meeting.IsDeleted).
 		Suffix("RETURNING \"id\"").
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db)
@@ -59,13 +60,13 @@ func (r *repo) Add(ctx context.Context, meeting *models.Meeting) error {
 
 func (r *repo) AddMany(ctx context.Context, meetings []models.Meeting) ([]uint64, error) {
 	query := sq.Insert("meeting").
-		Columns("user_id", "link", "start", "\"end\"").
+		Columns("user_id", "link", "start", "\"end\"", "isDeleted").
 		Suffix("RETURNING \"id\"").
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db)
 
 	for _, meeting := range meetings {
-		query = query.Values(meeting.UserId, meeting.Link, meeting.Start, meeting.End)
+		query = query.Values(meeting.UserId, meeting.Link, meeting.Start, meeting.End, meeting.IsDeleted)
 	}
 
 	rows, err := query.QueryContext(ctx)
@@ -88,7 +89,7 @@ func (r *repo) AddMany(ctx context.Context, meetings []models.Meeting) ([]uint64
 func (r *repo) Describe(ctx context.Context, id uint64) (*models.Meeting, error) {
 	query := sq.Select("id", "user_id", "link", "start", "\"end\"").
 		From("meeting").
-		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"id": id}, sq.Eq{"isDeleted": false}).
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db)
 
@@ -128,6 +129,7 @@ func (r *repo) Update(ctx context.Context, meeting models.Meeting) (bool, error)
 func (r *repo) List(ctx context.Context, limit, offset uint64) ([]models.Meeting, error) {
 	query := sq.Select("id", "user_id", "link", "start", "\"end\"").
 		From("meeting").
+		Where(sq.Eq{"isDeleted": false}).
 		Offset(offset).
 		Limit(limit).
 		PlaceholderFormat(sq.Dollar).
@@ -150,7 +152,8 @@ func (r *repo) List(ctx context.Context, limit, offset uint64) ([]models.Meeting
 }
 
 func (r *repo) Remove(ctx context.Context, id uint64) (bool, error) {
-	query := sq.Delete("meeting").
+	query := sq.Update("meeting").
+		Set("isDeleted", true).
 		Where(sq.Eq{"id": id}).
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db)
