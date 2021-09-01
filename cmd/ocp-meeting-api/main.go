@@ -36,22 +36,15 @@ func regSignalHandler(ctx context.Context) context.Context {
 	return ctx
 }
 
-func runGRPC(ctx context.Context, config *config.Config, prod producer.Producer) error {
+func runGRPC(ctx context.Context, config *config.Config, apiServer desc.OcpMeetingApiServer) error {
 	listen, err := net.Listen("tcp", config.Grpc.Address)
 	if err != nil {
 		log.Error().Err(err).Msg("GRPC: Listen")
 		return err
 	}
 
-	db, err := repo.NewDB(config)
-	if err != nil {
-		log.Error().Err(err).Msg("db connect failed")
-		return err
-	}
-	defer db.Close()
-
 	s := grpc.NewServer()
-	desc.RegisterOcpMeetingApiServer(s, api.NewOcpMeetingApi(repo.NewRepo(db), prod))
+	desc.RegisterOcpMeetingApiServer(s, apiServer)
 	log.Info().Msg("GRPC Service was started")
 
 	srvErr := make(chan error)
@@ -135,12 +128,21 @@ func main() {
 
 	config, err := config.Read()
 
-	prod := runKafka(config)
-
 	if err != nil {
 		log.Fatal().Err(err).Msg("Readig configuration file was failed")
 		return
 	}
+
+	prod := runKafka(config)
+
+	db, err := repo.NewDB(config)
+	if err != nil {
+		log.Error().Err(err).Msg("db connect failed")
+		return
+	}
+	defer db.Close()
+
+	apiServer := api.NewOcpMeetingApi(repo.NewRepo(db), prod)
 
 	go runMetricsServer(config)
 
@@ -150,7 +152,7 @@ func main() {
 		}
 	}()
 
-	if err := runGRPC(ctx, config, prod); err != nil {
+	if err := runGRPC(ctx, config, apiServer); err != nil {
 		log.Fatal().Err(err).Msg("GRPC Service stopped on error")
 	}
 }

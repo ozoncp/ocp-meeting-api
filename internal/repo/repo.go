@@ -109,7 +109,7 @@ func (r *repo) Update(ctx context.Context, meeting models.Meeting) (bool, error)
 		Set("link", meeting.Link).
 		Set("start", meeting.Start).
 		Set("\"end\"", meeting.End).
-		Where(sq.Eq{"id": meeting.Id}).
+		Where(sq.Eq{"id": meeting.Id}, sq.Eq{"isDeleted": false}).
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db)
 
@@ -154,7 +154,7 @@ func (r *repo) List(ctx context.Context, limit, offset uint64) ([]models.Meeting
 func (r *repo) Remove(ctx context.Context, id uint64) (bool, error) {
 	query := sq.Update("meeting").
 		Set("isDeleted", true).
-		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"id": id}, sq.Eq{"isDeleted": false}).
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.db)
 
