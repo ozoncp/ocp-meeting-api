@@ -1,6 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-SELECT 'up SQL query';
 CREATE TABLE meeting
 (
     id      SERIAL PRIMARY KEY,
@@ -13,6 +12,5 @@ CREATE TABLE meeting
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
 DROP TABLE IF EXISTS meeting;
 -- +goose StatementEnd

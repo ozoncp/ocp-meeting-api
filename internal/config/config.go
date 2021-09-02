@@ -13,10 +13,14 @@ type Database struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 	Name     string `yaml:"database"`
-	SSL      string `yaml:"ssl"`
+	SSL      string `yaml:"sslmode"`
 	Driver   string `yaml:"driver"`
 }
 type Grpc struct {
+	Address string `yaml:"address"`
+}
+
+type Rest struct {
 	Address string `yaml:"address"`
 }
 
@@ -36,12 +40,19 @@ type Prometheus struct {
 	Port string `yaml:"port"`
 }
 
+type Jaeger struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
+}
+
 type Config struct {
 	Project    Project    `yaml:"project"`
 	Grpc       Grpc       `yaml:"grpc"`
+	Rest       Rest       `yaml:"rest"`
 	Database   Database   `yaml:"database"`
 	Kafka      Kafka      `yaml:"kafka"`
 	Prometheus Prometheus `yaml:"prometheus"`
+	Jaeger     Jaeger     `yaml:"jaeger"`
 }
 
 func Read() (*Config, error) {

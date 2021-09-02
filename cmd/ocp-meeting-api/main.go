@@ -20,11 +20,6 @@ import (
 	log "github.com/rs/zerolog/log"
 )
 
-const (
-	grpcPort = ":8082"
-	httpPort = ":8080"
-)
-
 func regSignalHandler(ctx context.Context) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -41,29 +36,15 @@ func regSignalHandler(ctx context.Context) context.Context {
 	return ctx
 }
 
-func runGRPC(ctx context.Context, config *config.Config) error {
-	listen, err := net.Listen("tcp", grpcPort)
+func runGRPC(ctx context.Context, config *config.Config, apiServer desc.OcpMeetingApiServer) error {
+	listen, err := net.Listen("tcp", config.Grpc.Address)
 	if err != nil {
 		log.Error().Err(err).Msg("GRPC: Listen")
 		return err
 	}
 
-	prod, err := producer.NewProducer(config.Kafka.Topic, config.Kafka.Brokers)
-	if err != nil {
-		log.Error().Err(err).Msg("Kafka start failed")
-		return err
-	}
-	log.Info().Msg("start producer")
-
-	db, err := repo.NewDB(config)
-	if err != nil {
-		log.Error().Err(err).Msg("db connect failed")
-		return err
-	}
-	defer db.Close()
-
 	s := grpc.NewServer()
-	desc.RegisterOcpMeetingApiServer(s, api.NewOcpMeetingApi(repo.NewRepo(db), prod))
+	desc.RegisterOcpMeetingApiServer(s, apiServer)
 	log.Info().Msg("GRPC Service was started")
 
 	srvErr := make(chan error)
@@ -86,17 +67,17 @@ func runGRPC(ctx context.Context, config *config.Config) error {
 	return nil
 }
 
-func runJSON(ctx context.Context) error {
+func runJSON(ctx context.Context, config *config.Config) error {
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	err := desc.RegisterOcpMeetingApiHandlerFromEndpoint(ctx, mux, grpcPort, opts)
+	err := desc.RegisterOcpMeetingApiHandlerFromEndpoint(ctx, mux, config.Grpc.Address, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("JSON: Register API handler")
 		return err
 	}
 
-	srv := &http.Server{Addr: httpPort, Handler: mux}
+	srv := &http.Server{Addr: config.Rest.Address, Handler: mux}
 	log.Info().Msg("HTTP Service was started")
 
 	srvErr := make(chan error)
@@ -119,18 +100,27 @@ func runJSON(ctx context.Context) error {
 	return nil
 }
 
-func runMetricsServer(uri string, port string) error {
+func runMetricsServer(config *config.Config) error {
 	mux := http.NewServeMux()
-	mux.Handle(uri, promhttp.Handler())
+	mux.Handle(config.Prometheus.Uri, promhttp.Handler())
 
 	srv := &http.Server{
-		Addr:    port,
+		Addr:    config.Prometheus.Port,
 		Handler: mux,
 	}
 	metrics.RegisterMetrics()
 	log.Info().Msg("Metrics server started")
 
 	return srv.ListenAndServe()
+}
+
+func runKafka(config *config.Config) producer.Producer {
+	prod, err := producer.NewProducer(config.Kafka.Topic, config.Kafka.Brokers)
+	if err != nil {
+		log.Panic().Msg("Kafka start failed")
+	}
+	log.Info().Msg("start producer")
+	return prod
 }
 
 func main() {
@@ -143,15 +133,26 @@ func main() {
 		return
 	}
 
-	go runMetricsServer(config.Prometheus.Uri, config.Prometheus.Port)
+	prod := runKafka(config)
+
+	db, err := repo.NewDB(config)
+	if err != nil {
+		log.Error().Err(err).Msg("db connect failed")
+		return
+	}
+	defer db.Close()
+
+	apiServer := api.NewOcpMeetingApi(repo.NewRepo(db), prod)
+
+	go runMetricsServer(config)
 
 	go func() {
-		if err := runJSON(ctx); err != nil {
+		if err := runJSON(ctx, config); err != nil {
 			log.Fatal().Err(err).Msg("HTTP Service stopped on error")
 		}
 	}()
 
-	if err := runGRPC(ctx, config); err != nil {
+	if err := runGRPC(ctx, config, apiServer); err != nil {
 		log.Fatal().Err(err).Msg("GRPC Service stopped on error")
 	}
 }

@@ -6,11 +6,12 @@ import (
 )
 
 type Meeting struct {
-	Id     uint64
-	UserId uint64
-	Link   string
-	Start  time.Time
-	End    time.Time
+	Id        uint64
+	UserId    uint64
+	Link      string
+	Start     time.Time
+	End       time.Time
+	IsDeleted bool
 }
 
 func (m Meeting) String() string {

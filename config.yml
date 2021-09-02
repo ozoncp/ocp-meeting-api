@@ -6,6 +6,8 @@ project:
 grpc:
   address: ":8082"
 
+rest:
+  address: ":8081"
 
 database:
   host: "127.0.0.1"
@@ -24,4 +26,8 @@ prometheus:
 kafka:
   topic: "meeting"
   brokers:
-    - "kafka:9092"
+    - "127.0.0.1:9094"
+
+jaeger:
+  host: "jaeger"
+  port: ":6831"
